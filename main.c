@@ -26,6 +26,7 @@ typedef struct
     TreeMap *mapaAnverso;
     TreeMap *mapaReverso;
     TreeMap *mapaComplejidad;
+    TreeMap *mapaContraseñas;
     List *listaTarjetas;
 }DatosAplicacion;
 
@@ -90,6 +91,7 @@ DatosAplicacion *crearDatos()
     aux->mapaAnverso = createTreeMap(lower_than_string);
     aux->mapaReverso = createTreeMap(lower_than_string);
     aux->mapaComplejidad = createTreeMap(lower_than_string);
+    aux->mapaContraseñas = createTreeMap(lower_than_string);
     aux->listaTarjetas = createList();
     return aux;
 }
@@ -191,13 +193,74 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contraseña)
     }
 
     insertTreeMap(datosApp->mapaUsuarios, usuario->nombre, usuario);
+    insertTreeMap(datosApp->mapaContraseñas, contraseña, contraseña);
 
     printf("Usuario creado correctamente.\n");
 }
 
-void menuPrincipal()
+void mostrarSegundorMenu(tipoUsuario *usuario)
 {
+    printf("\nBienvenid@ %s\n\n", usuario->nombre);
+    printf("¿Qué desea hacer en este momento?\n");
+    printf("1.- Ver mis tarjetas de estudio\n");
+    printf("2.- Agregar una nueva tarjeta a mi mazo\n");
+    printf("3.- Empezar un quiz\n");
+    printf("4.- Cerrar Sesión\n");
+}
 
+void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
+{
+    int opcion;
+
+    while (1)
+    {
+        do
+        {
+            mostrarSegundorMenu(usuario);
+            scanf("%d", &opcion);
+            getchar();
+        } while (opcion < 0 || opcion > 5);
+
+        switch (opcion)
+        {
+            case 1:
+            {
+                Pair *aux = firstTreeMap(datosApp->mapaComplejidad);
+                List *lista = aux->value;
+                tipoTarjeta *tarjeta = firstList(lista);
+
+                while (aux != NULL)
+                {
+                    lista = aux->value;
+                    tarjeta = firstList(lista);
+                    
+                    while (tarjeta != NULL)
+                    {
+                        printf("%s, ", tarjeta->anverso);
+                        printf("%s, ", tarjeta->reverso);
+                        printf("%s\n", tarjeta->oracion);
+                        tarjeta = nextList(lista);
+                    }
+                    aux = nextTreeMap(datosApp->mapaComplejidad);
+                }
+
+                break;
+            }
+            case 2:
+            {
+                break;
+            }
+            case 3:
+            {
+                break;
+            }
+            case 4:
+            {
+                printf("\nCerrando sesión. Se volverá al menú de inicio.\n");
+                return;
+            }
+        }
+    }
 }
 
 int main()
@@ -229,7 +292,20 @@ int main()
 
                 if (searchTreeMap(datosApp->mapaUsuarios, nombre) == NULL) 
                 {
-                    crearUsuario(datosApp, nombre, contraseña);
+                    if (searchTreeMap(datosApp->mapaContraseñas, contraseña) == NULL) 
+                    {
+                        crearUsuario(datosApp, nombre, contraseña);
+                    }
+                    else
+                    {
+                        do
+                        {
+                            printf("La contraeña ingresada ya existe, ingrese otra por favor.\n");
+                            leerChar(&contraseña);
+                        } while (searchTreeMap(datosApp->mapaContraseñas, contraseña) != NULL);
+
+                        crearUsuario(datosApp, nombre, contraseña);
+                    }
                 }
                 else
                 {
@@ -239,7 +315,20 @@ int main()
                         leerChar(&nombre);
                     } while (searchTreeMap(datosApp->mapaUsuarios, nombre) != NULL);
 
-                    crearUsuario(datosApp, nombre, contraseña);
+                    if (searchTreeMap(datosApp->mapaContraseñas, contraseña) == NULL) 
+                    {
+                        crearUsuario(datosApp, nombre, contraseña);
+                    }
+                    else
+                    {
+                        do
+                        {
+                            printf("La contraeña ingresada ya existe, ingrese otra por favor.\n");
+                            leerChar(&contraseña);
+                        } while (searchTreeMap(datosApp->mapaContraseñas, contraseña) != NULL);
+
+                        crearUsuario(datosApp, nombre, contraseña);
+                    }
                 }
                 break;
             }
@@ -264,7 +353,7 @@ int main()
                     if (strcmp(usuario->contraseña, contraseña) == 0)
                     {
                         printf("Inicio de sesión válido.\n");
-                        menuPrincipal();
+                        menuPrincipal(datosApp, usuario);
                     }
                     else 
                     {
@@ -275,7 +364,7 @@ int main()
                         } while (strcmp(usuario->contraseña, contraseña) != 0);
 
                         printf("Inicio de sesión válido.\n");
-                        menuPrincipal();
+                        menuPrincipal(datosApp, usuario);
                     }
                 }
                 else
@@ -292,7 +381,7 @@ int main()
                     if (strcmp(usuario->contraseña, contraseña) == 0)
                     {
                         printf("Inicio de sesión válido.\n");
-                        menuPrincipal();
+                        menuPrincipal(datosApp, usuario);
                     }
                     else 
                     {
@@ -303,7 +392,7 @@ int main()
                         } while (strcmp(usuario->contraseña, contraseña) != 0);
 
                         printf("Inicio de sesión válido.\n");
-                        menuPrincipal();
+                        menuPrincipal(datosApp, usuario);
                     }
                 }
 
