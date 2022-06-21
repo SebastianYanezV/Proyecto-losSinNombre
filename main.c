@@ -261,8 +261,6 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
             }
         }
     }
-<<<<<<< HEAD
-=======
 }
 
 void registrarse(DatosAplicacion *datosApp, char *nombre, char *contrasena)
@@ -364,7 +362,6 @@ void iniciarSesion(DatosAplicacion *datosApp, char *nombre, char *contrasena)
             menuPrincipal(datosApp, usuario);
         }
     }
->>>>>>> 559df6b (Modularicé la función main del programa creando las funciones "registrarse" e "iniciarSesion". (Sebastián Yáñez))
 }
 
 int main()
@@ -390,55 +387,12 @@ int main()
                 printf("\nA continuación ingrese sus datos personales para registrarse en EN-Learning Cards:\n");
                 printf("Nombre de usuario: ");
                 leerChar(&nombre);
-                printf("Contrasena: ");
+                printf("Contraseña: ");
                 leerChar(&contrasena);
                 printf("\n");
 
-<<<<<<< HEAD
-                if (searchTreeMap(datosApp->mapaUsuarios, nombre) == NULL) 
-                {
-                    if (searchTreeMap(datosApp->mapaContrasenas, contrasena) == NULL) 
-                    {
-                        crearUsuario(datosApp, nombre, contrasena);
-                    }
-                    else
-                    {
-                        do
-                        {
-                            printf("La contrasena ingresada ya existe, ingrese otra por favor.\n");
-                            leerChar(&contrasena);
-                        } while (searchTreeMap(datosApp->mapaContrasenas, contrasena) != NULL);
-
-                        crearUsuario(datosApp, nombre, contrasena);
-                    }
-                }
-                else
-                {
-                    do
-                    {
-                        printf("El nombre de usuario ingresado ya existe, ingrese otro por favor.\n");
-                        leerChar(&nombre);
-                    } while (searchTreeMap(datosApp->mapaUsuarios, nombre) != NULL);
-
-                    if (searchTreeMap(datosApp->mapaContrasenas, contrasena) == NULL) 
-                    {
-                        crearUsuario(datosApp, nombre, contrasena);
-                    }
-                    else
-                    {
-                        do
-                        {
-                            printf("La contraena ingresada ya existe, ingrese otra por favor.\n");
-                            leerChar(&contrasena);
-                        } while (searchTreeMap(datosApp->mapaContrasenas, contrasena) != NULL);
-
-                        crearUsuario(datosApp, nombre, contrasena);
-                    }
-                }
-=======
                 registrarse(datosApp, nombre, contrasena);
 
->>>>>>> 559df6b (Modularicé la función main del programa creando las funciones "registrarse" e "iniciarSesion". (Sebastián Yáñez))
                 break;
             }
             case 2:
@@ -447,67 +401,11 @@ int main()
                 printf("\nA continuación ingrese sus datos personales para iniciar sesión en EN-Learning Cards:\n");
                 printf("Nombre de usuario: ");
                 leerChar(&nombre);
-                printf("Contrasena: ");
+                printf("Contraseña: ");
                 leerChar(&contrasena);
                 printf("\n");
 
-<<<<<<< HEAD
-                Pair *aux;
-                tipoUsuario *usuario;
-
-                if (searchTreeMap(datosApp->mapaUsuarios, nombre) != NULL)
-                {
-                    aux = searchTreeMap(datosApp->mapaUsuarios, nombre);
-                    usuario = aux->value;
-
-                    if (strcmp(usuario->contrasena, contrasena) == 0)
-                    {
-                        printf("Inicio de sesión válido.\n");
-                        menuPrincipal(datosApp, usuario);
-                    }
-                    else 
-                    {
-                        do
-                        {
-                            printf("La contrasena ingresada es incorrecta, ingrese otra por favor.\n");
-                            leerChar(&contrasena);
-                        } while (strcmp(usuario->contrasena, contrasena) != 0);
-
-                        printf("Inicio de sesión válido.\n");
-                        menuPrincipal(datosApp, usuario);
-                    }
-                }
-                else
-                {
-                    do
-                    {
-                        printf("El nombre de usuario ingresado es incorrecto, ingrese otro por favor.\n");
-                        leerChar(&nombre);
-                    } while (searchTreeMap(datosApp->mapaUsuarios, nombre) == NULL);
-
-                    aux = searchTreeMap(datosApp->mapaUsuarios, nombre);
-                    usuario = aux->value;
-
-                    if (strcmp(usuario->contrasena, contrasena) == 0)
-                    {
-                        printf("Inicio de sesión válido.\n");
-                        menuPrincipal(datosApp, usuario);
-                    }
-                    else 
-                    {
-                        do
-                        {
-                            printf("La contrasena ingresada es incorrecta, ingrese otra por favor.\n");
-                            leerChar(&contrasena);
-                        } while (strcmp(usuario->contrasena, contrasena) != 0);
-
-                        printf("Inicio de sesión válido.\n");
-                        menuPrincipal(datosApp, usuario);
-                    }
-                }
-=======
                 iniciarSesion(datosApp, nombre, contrasena);
->>>>>>> 559df6b (Modularicé la función main del programa creando las funciones "registrarse" e "iniciarSesion". (Sebastián Yáñez))
 
                 break;
             }
