@@ -17,18 +17,16 @@ typedef struct
 {
     char *nombre;
     char *contrasena;
+    int quizesRealizados;
     List *listaTarjetasUsuario;
-    TreeMap *MapaComplejidadUsuario;
-    TreeMap *mapaAnversoUsuario;
-    TreeMap *mapaReversoUsuario;
+    TreeMap *MapaComplejidad;
+    TreeMap *mapaAnverso;
+    TreeMap *mapaReverso;
 }tipoUsuario;
 
 typedef struct 
 {
     TreeMap *mapaUsuarios;
-    TreeMap *mapaAnverso;
-    TreeMap *mapaReverso;
-    TreeMap *mapaComplejidad;
     TreeMap *mapaContrasenas;
     List *listaTarjetas;
 }DatosAplicacion;
@@ -91,9 +89,6 @@ DatosAplicacion *crearDatos()
 {
     DatosAplicacion *aux = (DatosAplicacion*) calloc (1, sizeof(DatosAplicacion));
     aux->mapaUsuarios = createTreeMap(lower_than_string);
-    aux->mapaAnverso = createTreeMap(lower_than_string);
-    aux->mapaReverso = createTreeMap(lower_than_string);
-    aux->mapaComplejidad = createTreeMap(lower_than_string);
     aux->mapaContrasenas = createTreeMap(lower_than_string);
     aux->listaTarjetas = createList();
     return aux;
@@ -106,7 +101,7 @@ void leerChar(char** charALeer)
     scanf("%[^\n]s", aux);
     getchar();
     largo = strlen(aux) + 1;
-    (charALeer) = (char) calloc (largo, sizeof(char));
+    (*charALeer) = (char*) calloc (largo, sizeof(char));
     strcpy((*charALeer), aux);
 }
 
@@ -120,7 +115,7 @@ void mostrarPrimerMenu()
 
 char* reservarMemoria(int largo)
 {
-    char aux = (char) calloc(largo, sizeof(char));
+    char *aux = (char*) calloc(largo, sizeof(char));
     return aux;
 }
 
@@ -166,11 +161,8 @@ void leerDatosApp(DatosAplicacion *datosApp)
 
         tarjetaAux->complejidad = 1;
         pushBack(datosApp->listaTarjetas, tarjetaAux);
-        insertTreeMap(datosApp->mapaAnverso, tarjetaAux->anverso, tarjetaAux);
-        insertTreeMap(datosApp->mapaReverso, tarjetaAux->reverso, tarjetaAux);
     }
     
-    insertTreeMap(datosApp->mapaComplejidad, &tarjetaAux->complejidad, datosApp->listaTarjetas);
     fclose(archivoTarjetas);
 }
 
@@ -187,22 +179,25 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     usuario->contrasena = (char*) malloc(largo * sizeof(char));
     strcpy(usuario->contrasena, contrasena);
 
+    usuario->quizesRealizados = 0;
+
     usuario->listaTarjetasUsuario = createList();
-    usuario->MapaComplejidadUsuario = createTreeMap(lower_than_string);
-    usuario->mapaAnversoUsuario = createTreeMap(lower_than_string);
-    usuario->mapaReversoUsuario = createTreeMap(lower_than_string);
+    usuario->MapaComplejidad = createTreeMap(lower_than_string);
+    usuario->mapaAnverso = createTreeMap(lower_than_string);
+    usuario->mapaReverso = createTreeMap(lower_than_string);
 
     tipoTarjeta *aux = firstList(datosApp->listaTarjetas);
+    tipoTarjeta *aux2 = aux;
 
     while (aux != NULL)
     {
         pushBack(usuario->listaTarjetasUsuario, aux);
-        insertTreeMap(usuario->mapaAnversoUsuario, aux->anverso, aux);
-        insertTreeMap(usuario->mapaReversoUsuario, aux->reverso, aux);
+        insertTreeMap(usuario->mapaAnverso, aux->anverso, aux);
+        insertTreeMap(usuario->mapaReverso, aux->reverso, aux);
         aux = nextList(datosApp->listaTarjetas);
     }
 
-    insertTreeMap(usuario->MapaComplejidadUsuario, &aux->complejidad, usuario->listaTarjetasUsuario);
+    insertTreeMap(usuario->MapaComplejidad, &aux2->complejidad, usuario->listaTarjetasUsuario);
 
     insertTreeMap(datosApp->mapaUsuarios, usuario->nombre, usuario);
     insertTreeMap(datosApp->mapaContrasenas, contrasena, contrasena);
@@ -251,7 +246,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
 
                 if (opcion2 == 1)
                 {
-                    Pair *aux = firstTreeMap(usuario->mapaReversoUsuario);
+                    Pair *aux = firstTreeMap(usuario->mapaReverso);
                     tipoTarjeta *tarjeta;
 
                     while (aux != NULL)
@@ -262,13 +257,13 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                         printf("%s, ", tarjeta->anverso);
                         printf("%s\n", tarjeta->oracion);
 
-                        aux = nextTreeMap(usuario->mapaReversoUsuario);
+                        aux = nextTreeMap(usuario->mapaReverso);
                     }
                 }
 
                 if (opcion2 == 2)
                 {
-                    Pair *aux = firstTreeMap(usuario->mapaAnversoUsuario);
+                    Pair *aux = firstTreeMap(usuario->mapaAnverso);
                     tipoTarjeta *tarjeta;
 
                     while (aux != NULL)
@@ -279,13 +274,13 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                         printf("%s, ", tarjeta->reverso);
                         printf("%s\n", tarjeta->oracion);
 
-                        aux = nextTreeMap(usuario->mapaAnversoUsuario);
+                        aux = nextTreeMap(usuario->mapaAnverso);
                     }
                 }
 
                 if (opcion2 == 3)
                 {
-                    Pair *aux = firstTreeMap(usuario->MapaComplejidadUsuario);
+                    Pair *aux = firstTreeMap(usuario->MapaComplejidad);
                     List *lista = aux->value;
                     tipoTarjeta *tarjeta = firstList(lista);
 
@@ -301,7 +296,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                             printf("%s\n", tarjeta->oracion);
                             tarjeta = nextList(lista);
                         }
-                        aux = nextTreeMap(usuario->MapaComplejidadUsuario);
+                        aux = nextTreeMap(usuario->MapaComplejidad);
                     }
                 }   
 
@@ -310,6 +305,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
             case 2:
             {
                 tipoTarjeta *tarjetaAux;
+                List *listaComplejidad;
                 int largo, k;
 
                 tarjetaAux = (tipoTarjeta*) calloc(1, sizeof(tipoTarjeta));
@@ -338,45 +334,79 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                 tarjetaAux->oracion = reservarMemoria(largo);
                 strcpy(tarjetaAux->oracion, frase);
 
-                if (searchTreeMap(usuario->mapaAnversoUsuario, tarjetaAux->anverso) != NULL)
+                if (searchTreeMap(usuario->mapaAnverso, tarjetaAux->anverso) != NULL)
                 {
-                    printf("\nLa palabra ingresada ya existe por lo que no se pudo ingresar.\n");
-                    return;
+                    printf("\nLa palabra ingresada ya existe por lo que no se pudo agregar.\n");
                 }
+                else
+                {
+                    tarjetaAux->complejidad = 1;
 
-                tarjetaAux->complejidad = 1;
+                    pushBack(usuario->listaTarjetasUsuario, tarjetaAux);
 
-                pushBack(usuario->listaTarjetasUsuario, tarjetaAux);
+                    insertTreeMap(usuario->mapaAnverso, tarjetaAux->anverso, tarjetaAux);
+                    insertTreeMap(usuario->mapaReverso, tarjetaAux->reverso, tarjetaAux);
 
-                insertTreeMap(usuario->mapaAnversoUsuario, tarjetaAux->anverso, tarjetaAux);
-                insertTreeMap(usuario->mapaReversoUsuario, tarjetaAux->reverso, tarjetaAux);
+                    if (searchTreeMap(usuario->MapaComplejidad, &tarjetaAux->complejidad) == NULL)
+                    {
+                        listaComplejidad = createList();
+                        pushBack(listaComplejidad, tarjetaAux);
+                        insertTreeMap(usuario->MapaComplejidad, &tarjetaAux->complejidad, listaComplejidad);
+                    }
+                    else
+                    {
+                        Pair *aux = searchTreeMap(usuario->MapaComplejidad, &tarjetaAux->complejidad);
+                        listaComplejidad = aux->value;
+                        pushBack(listaComplejidad, tarjetaAux);
+                    }
+
+                    printf("\nPalabra agregada correctamente.\n");
+                }
 
                 break;
             }
             case 3:
             {
-                printf("Esta es la primera vez que realiza un quiz, por que deberá reponder todas las tarjetas para medir sus conocimientos:\n");
-
-                Pair *aux = firstTreeMap(datosApp->mapaAnverso);
-                tipoTarjeta *tarjeta;
-                char *palabra;
-                int largo, k;
-
-                while (aux != NULL)
+                if (usuario->quizesRealizados == 0 || usuario->quizesRealizados % 5 == 0)
                 {
-                    tarjeta = aux->value;
-
-                    do
+                    if (usuario->quizesRealizados == 0)
                     {
-                        printf("%s, ", tarjeta->reverso);
-                        printf("ingrese el significado de esta palabra en español: ");
-                        leerChar(&palabra);
-                        largo = strlen(palabra) + 1;
-                        for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
-                        printf("\n");
-                    } while (strcmp(tarjeta->anverso, palabra) != 0);
+                        printf("Esta es la primera vez que realiza un quiz, por lo que deberá reponder todas las tarjetas para medir sus conocimientos:\n");
+                    }
+
+                    if (usuario->quizesRealizados != 0 && usuario->quizesRealizados % 5 == 0)
+                    {
+                        printf("Ya ha pasado un tiempo desde que hizo un quiz con todas sus tarjetas, ¿no lo cree?\n");
+                        printf("Es momento de hacer uno para saber como va su aprendizaje!\n");
+                    }
+
+                    Pair *aux = firstTreeMap(usuario->mapaAnverso);
+                    tipoTarjeta *tarjeta;
+                    char *palabra;
+                    int largo, k;
+
+                    while (aux != NULL)
+                    {
+                        tarjeta = aux->value;
+
+                        do
+                        {
+                            printf("%s, ", tarjeta->reverso);
+                            printf("ingrese el significado de esta palabra en español: ");
+                            leerChar(&palabra);
+                            largo = strlen(palabra) + 1;
+                            for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
+                            printf("\n");
+                        } while (strcmp(tarjeta->anverso, palabra) != 0);
                     
-                    aux = nextTreeMap(datosApp->mapaAnverso);
+                        aux = nextTreeMap(usuario->mapaAnverso);
+                    }
+
+                    usuario->quizesRealizados = usuario->quizesRealizados + 1;
+                }
+                else
+                {
+                    usuario->quizesRealizados = usuario->quizesRealizados + 1;
                 }
 
                 break;
