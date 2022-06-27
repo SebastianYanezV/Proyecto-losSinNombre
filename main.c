@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include "list.h"
 #include "treemap.h"
+#include "heap.h"
 
 typedef struct
 {
@@ -19,9 +20,9 @@ typedef struct
     char *contrasena;
     int quizesRealizados;
     List *listaTarjetasUsuario;
-    TreeMap *MapaComplejidad;
     TreeMap *mapaAnverso;
     TreeMap *mapaReverso;
+    Mheap *monticuloComplejidad;
 }tipoUsuario;
 
 typedef struct 
@@ -182,7 +183,7 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     usuario->quizesRealizados = 0;
 
     usuario->listaTarjetasUsuario = createList();
-    usuario->MapaComplejidad = createTreeMap(lower_than_string);
+    usuario->monticuloComplejidad = createMheap();
     usuario->mapaAnverso = createTreeMap(lower_than_string);
     usuario->mapaReverso = createTreeMap(lower_than_string);
 
@@ -194,10 +195,9 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
         pushBack(usuario->listaTarjetasUsuario, aux);
         insertTreeMap(usuario->mapaAnverso, aux->anverso, aux);
         insertTreeMap(usuario->mapaReverso, aux->reverso, aux);
+        heap_push(usuario->monticuloComplejidad, aux, aux->complejidad);
         aux = nextList(datosApp->listaTarjetas);
     }
-
-    insertTreeMap(usuario->MapaComplejidad, &aux2->complejidad, usuario->listaTarjetasUsuario);
 
     insertTreeMap(datosApp->mapaUsuarios, usuario->nombre, usuario);
     insertTreeMap(datosApp->mapaContrasenas, contrasena, contrasena);
@@ -240,7 +240,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     printf("1.- Orden alfabético desde el reverso\n");
                     printf("2.- Orden alfabético desde el anverso\n");
                     printf("3.- Orden según complejidad\n");
-                    scanf("%d",&opcion2);
+                    scanf("%d", &opcion2);
                     getchar();
                 } while (opcion2 < 0 || opcion2 > 4);
 
@@ -280,23 +280,24 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
 
                 if (opcion2 == 3)
                 {
-                    Pair *aux = firstTreeMap(usuario->MapaComplejidad);
-                    List *lista = aux->value;
-                    tipoTarjeta *tarjeta = firstList(lista);
+                    tipoTarjeta *tarjeta = heap_top(usuario->monticuloComplejidad);
 
-                    while (aux != NULL)
+                    while (tarjeta != NULL)
                     {
-                        lista = aux->value;
-                        tarjeta = firstList(lista);
-                    
-                        while (tarjeta != NULL)
-                        {
-                            printf("%s, ", tarjeta->anverso);
-                            printf("%s, ", tarjeta->reverso);
-                            printf("%s\n", tarjeta->oracion);
-                            tarjeta = nextList(lista);
-                        }
-                        aux = nextTreeMap(usuario->MapaComplejidad);
+                        printf("%s, ", tarjeta->anverso);
+                        printf("%s, ", tarjeta->reverso);
+                        printf("%s\n", tarjeta->oracion);
+
+                        heap_pop(usuario->monticuloComplejidad);
+                        tarjeta = heap_top(usuario->monticuloComplejidad);
+                    }
+
+                    tarjeta = firstList(usuario->listaTarjetasUsuario);
+
+                    while (tarjeta != NULL)
+                    {
+                        heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
+                        tarjeta = nextList(usuario->listaTarjetasUsuario);
                     }
                 }   
 
@@ -342,23 +343,9 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                 {
                     tarjetaAux->complejidad = 1;
 
-                    pushBack(usuario->listaTarjetasUsuario, tarjetaAux);
-
                     insertTreeMap(usuario->mapaAnverso, tarjetaAux->anverso, tarjetaAux);
                     insertTreeMap(usuario->mapaReverso, tarjetaAux->reverso, tarjetaAux);
-
-                    if (searchTreeMap(usuario->MapaComplejidad, &tarjetaAux->complejidad) == NULL)
-                    {
-                        listaComplejidad = createList();
-                        pushBack(listaComplejidad, tarjetaAux);
-                        insertTreeMap(usuario->MapaComplejidad, &tarjetaAux->complejidad, listaComplejidad);
-                    }
-                    else
-                    {
-                        Pair *aux = searchTreeMap(usuario->MapaComplejidad, &tarjetaAux->complejidad);
-                        listaComplejidad = aux->value;
-                        pushBack(listaComplejidad, tarjetaAux);
-                    }
+                    heap_push(usuario->monticuloComplejidad, tarjetaAux, tarjetaAux->complejidad);
 
                     printf("\nPalabra agregada correctamente.\n");
                 }
@@ -397,9 +384,27 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                             largo = strlen(palabra) + 1;
                             for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
                             printf("\n");
+                            if (strcmp(tarjeta->anverso, palabra) != 0) tarjeta->complejidad = tarjeta->complejidad * 1.5;
+                            if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
                         } while (strcmp(tarjeta->anverso, palabra) != 0);
                     
                         aux = nextTreeMap(usuario->mapaAnverso);
+                    }
+
+                    tarjeta = heap_top(usuario->monticuloComplejidad);
+
+                    while (tarjeta != NULL)
+                    {
+                        heap_pop(usuario->monticuloComplejidad);
+                        tarjeta = heap_top(usuario->monticuloComplejidad);
+                    }
+
+                    tarjeta = firstList(usuario->listaTarjetasUsuario);
+
+                    while (tarjeta != NULL)
+                    {
+                        heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
+                        tarjeta = nextList(usuario->listaTarjetasUsuario);
                     }
 
                     usuario->quizesRealizados = usuario->quizesRealizados + 1;
