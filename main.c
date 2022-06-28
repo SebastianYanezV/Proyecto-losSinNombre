@@ -20,17 +20,17 @@ typedef struct
     char *contrasena;
     int quizesRealizados;
     int totalTarjetas;
-    List *listaTarjetasUsuario;
-    TreeMap *mapaAnverso;
-    TreeMap *mapaReverso;
-    Mheap *monticuloComplejidad;
+    List *listaTarjetasUsuario; //Lista que almacena las tarjetas base de la aplicación y las tarjetas que agregue el usuario
+    TreeMap *mapaAnverso; //Clave: anverso de la tarjeta ; Valor: tarjeta
+    TreeMap *mapaReverso; //Clave: reverso de la tarjeta ; Valor: tarjeta
+    Mheap *monticuloComplejidad; //Montículo para ordenar las tarjetas según la complejidad de cada una (de forma descendente)
 }tipoUsuario;
 
 typedef struct 
 {
-    TreeMap *mapaUsuarios;
-    TreeMap *mapaContrasenas;
-    List *listaTarjetas;
+    TreeMap *mapaUsuarios; //Clave: nombre del usuario ; Valor: usuario
+    TreeMap *mapaContrasenas; //Clave: contraseña ; Valor: contraseña
+    List *listaTarjetas; //Lista que almacena las tarjetas base de la aplicación
 }DatosAplicacion;
 
 //Función que lee el archivo csv
@@ -86,7 +86,7 @@ int lower_than_string(void* key1, void* key2)
     return 0;
 }
 
-//Función para crear la variable que almacenará todos los mapas
+//Función para crear la variable principal de la aplicación 
 DatosAplicacion *crearDatos()
 {
     DatosAplicacion *aux = (DatosAplicacion*) calloc (1, sizeof(DatosAplicacion));
@@ -96,7 +96,7 @@ DatosAplicacion *crearDatos()
     return aux;
 }
 
-//Funcion creada con el proposito de leer lo que ingrese el usuario
+//Función para crear la variable que almacenará todos los mapas
 void leerChar(char** charALeer)
 {
     char aux[200];
@@ -104,7 +104,7 @@ void leerChar(char** charALeer)
     scanf("%[^\n]s", aux);
     getchar();
     largo = strlen(aux) + 1;
-    (charALeer) = (char) calloc (largo, sizeof(char));
+    (*charALeer) = (char*) calloc (largo, sizeof(char));
     strcpy((*charALeer), aux);
 }
 
@@ -118,11 +118,11 @@ void mostrarPrimerMenu()
 
 char* reservarMemoria(int largo)
 {
-    char aux = (char) calloc(largo, sizeof(char));
+    char *aux = (char*) calloc(largo, sizeof(char));
     return aux;
 }
 
-//funcion que lee el archivo principal de donde se obtiene las tarjetas
+//función que lee el archivo principal (csv) de donde se obtienen las tarjetas
 void leerDatosApp(DatosAplicacion *datosApp)
 {
     FILE *archivoTarjetas = fopen("tarjetas.csv", "r");
@@ -154,7 +154,7 @@ void leerDatosApp(DatosAplicacion *datosApp)
                     for (k = 0; k < largo ; k++) tarjetaAux->anverso[k] = tolower(tarjetaAux->anverso[k]);
                     break;
                 }
-                case 2: //Se guarda la oracion
+                case 2: //Se guarda la oración
                 {
                     tarjetaAux->oracion = reservarMemoria(largo); 
                     strcpy(tarjetaAux->oracion, aux);
@@ -170,13 +170,13 @@ void leerDatosApp(DatosAplicacion *datosApp)
     fclose(archivoTarjetas);
 }
 
-//Funcion que crea un struc de tipo usuario una vez se registren
+//Función que crea una variable de tipo usuario una vez que el usuario se registre
 void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
 {
     tipoUsuario *usuario = (tipoUsuario*) malloc(1 * sizeof(tipoUsuario));
     int largo;
 
-    //Se crea el nombre y la contraseña del usuario con los datos dados
+    //Se guarda el nombre y la contraseña del usuario con los datos dados
     largo = strlen(nombre) + 1;
     usuario->nombre = (char*) malloc(largo * sizeof(char));
     strcpy(usuario->nombre, nombre);
@@ -195,9 +195,8 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     usuario->mapaReverso = createTreeMap(lower_than_string);
 
     tipoTarjeta *aux = firstList(datosApp->listaTarjetas);
-    tipoTarjeta *aux2 = aux;
     
-    //Se recorre la lista de tarjetas de la app para poder ingresarla en los TDAs correspondientes
+    //Se recorre la lista de tarjetas de la app para poder ingresar sus tarjetas en los TDAs correspondientes del usuario
     while (aux != NULL)
     {
         usuario->totalTarjetas++;
@@ -240,9 +239,9 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
 
         switch (opcion)
         {
+            //La opción 1 es la de ver las tarjetas del usuario
             case 1:
             {
-                //la opcion 1 es la de ver las tarjetas del usuario
                 int opcion2;
 
                 do
@@ -255,8 +254,9 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     getchar();
                 } while (opcion2 < 0 || opcion2 > 4);
                 
+                //Una vez elegida la forma, se presentan las tarjetas según el orden deseado
 
-                //una vez elegida la forma se presentan las tarjetas segun el orden deseado
+                //Se recorre el mapa reverso para mostrar las tarjetas por orden alfabético desde el reverso
                 if (opcion2 == 1)
                 {
                     Pair *aux = firstTreeMap(usuario->mapaReverso);
@@ -274,6 +274,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     }
                 }
 
+                //Se recorre el mapa anverso para mostrar las tarjetas por orden alfabético desde el anverso
                 if (opcion2 == 2)
                 {
                     Pair *aux = firstTreeMap(usuario->mapaAnverso);
@@ -291,6 +292,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     }
                 }
 
+                //Se "recorre" el motículo para mostrar las tarjetas según la complejidad de cada una
                 if (opcion2 == 3)
                 {
                     tipoTarjeta *tarjeta = heap_top(usuario->monticuloComplejidad);
@@ -316,9 +318,9 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
 
                 break;
             }
+            //La opción 2 es agregar una tarjeta al mazo de tarjetas que posee el usuario
             case 2:
             {
-                //la opcion 2 es agregar una tarjeta a la lista de tarjetas que posee el usuario
                 tipoTarjeta *tarjetaAux;
                 List *listaComplejidad;
                 int largo, k;
@@ -329,7 +331,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                 char *reverso;
                 char *frase;
                 
-                //se le pide al usuario que ingrese los datos para su tarjeta nueva
+                //Se le pide al usuario que ingrese los datos de su tarjeta nueva
                 printf("Ingrese el anverso (palabra en español) de la tarjeta nueva:\n");
                 leerChar(&anverso);
                 largo = strlen(anverso) + 1;
@@ -350,11 +352,12 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                 tarjetaAux->oracion = reservarMemoria(largo);
                 strcpy(tarjetaAux->oracion, frase);
                 
-                //se verifica que la tarjeta nueva no exista
+                //Se verifica que la tarjeta nueva no exista
                 if (searchTreeMap(usuario->mapaAnverso, tarjetaAux->anverso) != NULL)
                 {
                     printf("\nLa palabra ingresada ya existe por lo que no se pudo agregar.\n");
                 }
+                //Si la tarjeta no existe, se agrega a los distintos TDAs del usuario
                 else
                 {
                     tarjetaAux->complejidad = 1;
@@ -362,6 +365,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     insertTreeMap(usuario->mapaAnverso, tarjetaAux->anverso, tarjetaAux);
                     insertTreeMap(usuario->mapaReverso, tarjetaAux->reverso, tarjetaAux);
                     heap_push(usuario->monticuloComplejidad, tarjetaAux, tarjetaAux->complejidad);
+                    pushBack(usuario->listaTarjetasUsuario, tarjetaAux);
 
                     usuario->totalTarjetas++;
 
@@ -370,8 +374,10 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
 
                 break;
             }
+            //La opción 3 consta de realizar los distintos tipos de quizes
             case 3:
             {
+                //Aquí se hace el quiz inicial y los quizes de control de aprendizaje
                 if (usuario->quizesRealizados == 0 || usuario->quizesRealizados % 5 == 0)
                 {
                     if (usuario->quizesRealizados == 0)
@@ -449,6 +455,7 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
 
                     usuario->quizesRealizados = usuario->quizesRealizados + 1;
                 }
+                //Aquí se hacen los quizes personalizados por el usuario
                 else
                 {
                     tipoTarjeta *tarjeta;
@@ -535,20 +542,20 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
     }
 }
 
-//Funcion que permite al usuario registrarse
 void registrarse(DatosAplicacion *datosApp, char *nombre, char *contrasena)
 {
-    //se comprueba si el nombre no existe
+    //Se comprueba que el nombre ingresado no exista
     if (searchTreeMap(datosApp->mapaUsuarios, nombre) == NULL) 
     {
+        //Se comprueba que la contraseña ingresada no exista
         if (searchTreeMap(datosApp->mapaContrasenas, contrasena) == NULL) 
         {
-            //si el nombre y la contraseña no existen entonces se puede crear el usuario
+            //Si el nombre y la contraseña no existen entonces se puede crear el usuario
             crearUsuario(datosApp, nombre, contrasena);
         }
         else
         {
-            //si la contraseña ya existe se le pedira que ingrese una valida
+            //Si la contraseña ingresada ya existe se le pedirá al usuario que ingrese una nueva hasta que sea válida
             do
             {
                 printf("La contraseña ingresada ya existe, ingrese otra por favor.\n");
@@ -560,7 +567,7 @@ void registrarse(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     }
     else
     {
-        //si el nombre existe se le pedira que ingrese uno valido
+        //Si el nombre ingresado ya existe se le pedirá al usuario que ingrese uno nuevo hasta que sea válido
         do
         {
             printf("El nombre de usuario ingresado ya existe, ingrese otro por favor.\n");
@@ -584,8 +591,6 @@ void registrarse(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     }
 }
 
-
-//Funcion que permite iniciar sesion si el usuario existe
 void iniciarSesion(DatosAplicacion *datosApp, char *nombre, char *contrasena)
 {
     Pair *aux;
@@ -593,13 +598,13 @@ void iniciarSesion(DatosAplicacion *datosApp, char *nombre, char *contrasena)
 
     if (searchTreeMap(datosApp->mapaUsuarios, nombre) != NULL)
     {
-        //si el nombre ingresado es correcto se comprueba que la contraseña que ingrese sea correcta
+        //Si el nombre ingresado es correcto se comprueba que la contraseña que ingrese sea correcta
         aux = searchTreeMap(datosApp->mapaUsuarios, nombre);
         usuario = aux->value;
 
         if (strcmp(usuario->contrasena, contrasena) == 0)
         {
-            //si lo es,se le permitira el acceso
+            //Si lo es, se le permitirá el acceso 
             printf("Inicio de sesión válido.\n");
             menuPrincipal(datosApp, usuario);
         }
@@ -607,7 +612,7 @@ void iniciarSesion(DatosAplicacion *datosApp, char *nombre, char *contrasena)
         {
             do
             {
-                //si no se preguntara hasta que ingrese la contraseña correcta
+                //Si no lo es, se preguntará hasta que ingrese la contraseña correcta
                 printf("La contraseña ingresada es incorrecta, ingrese otra por favor.\n");
                 leerChar(&contrasena);
             } while (strcmp(usuario->contrasena, contrasena) != 0);
@@ -618,14 +623,14 @@ void iniciarSesion(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     }
     else
     {
-        //si no se ingresa el nombre correcto,se preguntara por el nombre hasta que este correcto
+        //Si no se ingresa el nombre correcto, se preguntará por el nombre hasta que este sea correcto
         do
         {
             printf("El nombre de usuario ingresado es incorrecto, ingrese otro por favor.\n");
             leerChar(&nombre);
         } while (searchTreeMap(datosApp->mapaUsuarios, nombre) == NULL);
 
-        //una vez este correcto,se realizaran los mismos pasos ya hechos anteriormente
+        //Una vez esté correcto, se realizarán los mismos pasos ya hechos anteriormente
         aux = searchTreeMap(datosApp->mapaUsuarios, nombre);
         usuario = aux->value;
 
@@ -650,7 +655,7 @@ void iniciarSesion(DatosAplicacion *datosApp, char *nombre, char *contrasena)
 
 int main()
 {
-    DatosAplicacion *datosApp = crearDatos();
+    DatosAplicacion *datosApp = crearDatos(); //Se crea la variable que almacena usuarios, contraseñas y tarjetas base de la app
     leerDatosApp(datosApp);
     int opcion;
 
@@ -665,6 +670,7 @@ int main()
 
         switch (opcion)
         {
+            //Registro del usuario
             case 1:
             {
                 char *nombre, *contrasena;
@@ -679,6 +685,7 @@ int main()
 
                 break;
             }
+            //Inicio de sesión del usuario
             case 2:
             {
                 char *nombre, *contrasena;
