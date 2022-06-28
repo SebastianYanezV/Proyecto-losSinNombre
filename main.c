@@ -19,6 +19,7 @@ typedef struct
     char *nombre;
     char *contrasena;
     int quizesRealizados;
+    int totalTarjetas;
     List *listaTarjetasUsuario;
     TreeMap *mapaAnverso;
     TreeMap *mapaReverso;
@@ -102,7 +103,7 @@ void leerChar(char** charALeer)
     scanf("%[^\n]s", aux);
     getchar();
     largo = strlen(aux) + 1;
-    (*charALeer) = (char*) calloc (largo, sizeof(char));
+    (charALeer) = (char) calloc (largo, sizeof(char));
     strcpy((*charALeer), aux);
 }
 
@@ -116,7 +117,7 @@ void mostrarPrimerMenu()
 
 char* reservarMemoria(int largo)
 {
-    char *aux = (char*) calloc(largo, sizeof(char));
+    char aux = (char) calloc(largo, sizeof(char));
     return aux;
 }
 
@@ -181,6 +182,7 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
     strcpy(usuario->contrasena, contrasena);
 
     usuario->quizesRealizados = 0;
+    usuario->totalTarjetas = 0;
 
     usuario->listaTarjetasUsuario = createList();
     usuario->monticuloComplejidad = createMheap();
@@ -192,6 +194,8 @@ void crearUsuario(DatosAplicacion *datosApp, char *nombre, char *contrasena)
 
     while (aux != NULL)
     {
+        usuario->totalTarjetas++;
+
         pushBack(usuario->listaTarjetasUsuario, aux);
         insertTreeMap(usuario->mapaAnverso, aux->anverso, aux);
         insertTreeMap(usuario->mapaReverso, aux->reverso, aux);
@@ -347,6 +351,8 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     insertTreeMap(usuario->mapaReverso, tarjetaAux->reverso, tarjetaAux);
                     heap_push(usuario->monticuloComplejidad, tarjetaAux, tarjetaAux->complejidad);
 
+                    usuario->totalTarjetas++;
+
                     printf("\nPalabra agregada correctamente.\n");
                 }
 
@@ -370,22 +376,44 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                     Pair *aux = firstTreeMap(usuario->mapaAnverso);
                     tipoTarjeta *tarjeta;
                     char *palabra;
-                    int largo, k;
+                    int largo, k, fallos, opcionPista;
 
                     while (aux != NULL)
                     {
                         tarjeta = aux->value;
+                        fallos = 0;
 
                         do
                         {
                             printf("%s, ", tarjeta->reverso);
-                            printf("ingrese el significado de esta palabra en español: ");
+                            printf("Ingrese el significado de esta palabra en español: ");
                             leerChar(&palabra);
                             largo = strlen(palabra) + 1;
                             for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
                             printf("\n");
-                            if (strcmp(tarjeta->anverso, palabra) != 0) tarjeta->complejidad = tarjeta->complejidad * 1.5;
+
+                            if (strcmp(tarjeta->anverso, palabra) != 0) 
+                            {
+                                tarjeta->complejidad = tarjeta->complejidad * 1.5;
+                                fallos++;
+
+                                if (fallos >= 3)
+                                {
+                                    do
+                                    {
+                                        printf("¿Desea ver una pista?\n");
+                                        printf("1.- SI\n");
+                                        printf("2.- NO\n");
+                                        scanf("%d", &opcionPista);
+                                        getchar();
+                                    } while (opcionPista < 0 || opcionPista > 3);
+
+                                    if (opcionPista == 1) printf("%s\n", tarjeta->oracion);
+                                }
+                            }
+
                             if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
+
                         } while (strcmp(tarjeta->anverso, palabra) != 0);
                     
                         aux = nextTreeMap(usuario->mapaAnverso);
@@ -411,6 +439,76 @@ void menuPrincipal(DatosAplicacion *datosApp, tipoUsuario *usuario)
                 }
                 else
                 {
+                    tipoTarjeta *tarjeta;
+                    int cantidadTarjetas, fallos, largo, k, opcionPista;
+                    char *palabra;
+                    int cont = 0;
+
+                    do
+                    {
+                        printf("¿Cuántas tarjetas desea responder en este quiz?\n");
+                        scanf("%d", &cantidadTarjetas);
+                        getchar();
+                    } while (cantidadTarjetas <= 0 || cantidadTarjetas > usuario->totalTarjetas);
+
+                    while (cont < cantidadTarjetas)
+                    {
+                        tarjeta = heap_top(usuario->monticuloComplejidad);
+                        fallos = 0;
+
+                        do
+                        {
+                            printf("%s, ", tarjeta->reverso);
+                            printf("Ingrese el significado de esta palabra en español: ");
+                            leerChar(&palabra);
+                            largo = strlen(palabra) + 1;
+                            for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
+                            printf("\n");
+
+                            if (strcmp(tarjeta->anverso, palabra) != 0) 
+                            {
+                                tarjeta->complejidad = tarjeta->complejidad * 1.5;
+                                fallos++;
+
+                                if (fallos >= 3)
+                                {
+                                    do
+                                    {
+                                        printf("¿Desea ver una pista?\n");
+                                        printf("1.- SI\n");
+                                        printf("2.- NO\n");
+                                        scanf("%d", &opcionPista);
+                                        getchar();
+                                    } while (opcionPista < 0 || opcionPista > 3);
+
+                                    if (opcionPista == 1) printf("%s\n", tarjeta->oracion);
+                                }
+                            }
+
+                            if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
+
+                        } while (strcmp(tarjeta->anverso, palabra) != 0);
+
+                        heap_pop(usuario->monticuloComplejidad);
+                        cont++;
+                    }
+
+                    tarjeta = heap_top(usuario->monticuloComplejidad);
+
+                    while (tarjeta != NULL)
+                    {
+                        heap_pop(usuario->monticuloComplejidad);
+                        tarjeta = heap_top(usuario->monticuloComplejidad);
+                    }
+
+                    tarjeta = firstList(usuario->listaTarjetasUsuario);
+
+                    while (tarjeta != NULL)
+                    {
+                        heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
+                        tarjeta = nextList(usuario->listaTarjetasUsuario);
+                    }
+
                     usuario->quizesRealizados = usuario->quizesRealizados + 1;
                 }
 
