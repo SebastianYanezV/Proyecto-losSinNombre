@@ -355,160 +355,170 @@ void agregarTarjeta(tipoUsuario *usuario)
     }
 }
 
+void quizCompleto(tipoUsuario *usuario)
+{
+    if (usuario->quizesRealizados == 0)
+    {
+        printf("Esta es la primera vez que realiza un quiz, por lo que deberá reponder todas las tarjetas para medir sus conocimientos:\n");
+    }
+
+    if (usuario->quizesRealizados != 0 && usuario->quizesRealizados % 5 == 0)
+    {
+        printf("Ya ha pasado un tiempo desde que hizo un quiz con todas sus tarjetas, ¿no lo cree?\n");
+        printf("Es momento de hacer uno para saber como va su aprendizaje!\n");
+    }
+
+    Pair *aux = firstTreeMap(usuario->mapaAnverso);
+    tipoTarjeta *tarjeta;
+    char *palabra;
+    int largo, k, fallos, opcionPista;
+
+    while (aux != NULL)
+    {
+        tarjeta = aux->value;
+        fallos = 0;
+
+        do
+        {
+            printf("%s, ", tarjeta->reverso);
+            printf("Ingrese el significado de esta palabra en español: ");
+            leerChar(&palabra);
+            largo = strlen(palabra) + 1;
+            for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
+            printf("\n");
+
+            if (strcmp(tarjeta->anverso, palabra) != 0) 
+            {
+                tarjeta->complejidad = tarjeta->complejidad * 1.5;
+                fallos++;
+
+                if (fallos >= 3)
+                {
+                    do
+                    {
+                        printf("¿Desea ver una pista?\n");
+                        printf("1.- SI\n");
+                        printf("2.- NO\n");
+                        scanf("%d", &opcionPista);
+                        getchar();
+                    } while (opcionPista < 0 || opcionPista > 3);
+
+                    if (opcionPista == 1) printf("%s\n", tarjeta->oracion);
+                }
+            }
+
+            if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
+
+        } while (strcmp(tarjeta->anverso, palabra) != 0);
+                    
+        aux = nextTreeMap(usuario->mapaAnverso);
+    }
+
+    tarjeta = heap_top(usuario->monticuloComplejidad);
+
+    while (tarjeta != NULL)
+    {
+        heap_pop(usuario->monticuloComplejidad);
+        tarjeta = heap_top(usuario->monticuloComplejidad);
+    }
+
+    tarjeta = firstList(usuario->listaTarjetasUsuario);
+
+    while (tarjeta != NULL)
+    {
+        heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
+        tarjeta = nextList(usuario->listaTarjetasUsuario);
+    }
+
+    usuario->quizesRealizados = usuario->quizesRealizados + 1;
+}
+
+void quizPersonalizado(tipoUsuario *usuario)
+{
+    tipoTarjeta *tarjeta;
+    int cantidadTarjetas, fallos, largo, k, opcionPista;
+    char *palabra;
+    int cont = 0;
+
+    do
+    {
+        printf("¿Cuántas tarjetas desea responder en este quiz?\n");
+        scanf("%d", &cantidadTarjetas);
+        getchar();
+    } while (cantidadTarjetas <= 0 || cantidadTarjetas > usuario->totalTarjetas);
+
+    while (cont < cantidadTarjetas)
+    {
+        tarjeta = heap_top(usuario->monticuloComplejidad);
+        fallos = 0;
+
+        do
+        {
+            printf("%s, ", tarjeta->reverso);
+            printf("Ingrese el significado de esta palabra en español: ");
+            leerChar(&palabra);
+            largo = strlen(palabra) + 1;
+            for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
+            printf("\n");
+
+            if (strcmp(tarjeta->anverso, palabra) != 0) 
+            {
+                tarjeta->complejidad = tarjeta->complejidad * 1.5;
+                fallos++;
+
+                if (fallos >= 3)
+                {
+                    do
+                    {
+                        printf("¿Desea ver una pista?\n");
+                        printf("1.- SI\n");
+                        printf("2.- NO\n");
+                        scanf("%d", &opcionPista);
+                        getchar();
+                    } while (opcionPista < 0 || opcionPista > 3);
+
+                    if (opcionPista == 1) printf("%s\n", tarjeta->oracion);
+                }
+            }
+
+            if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
+
+        } while (strcmp(tarjeta->anverso, palabra) != 0);
+
+        heap_pop(usuario->monticuloComplejidad);
+        cont++;
+    }
+
+    tarjeta = heap_top(usuario->monticuloComplejidad);
+
+    while (tarjeta != NULL)
+    {
+        heap_pop(usuario->monticuloComplejidad);
+        tarjeta = heap_top(usuario->monticuloComplejidad);
+    }
+
+    tarjeta = firstList(usuario->listaTarjetasUsuario);
+
+    while (tarjeta != NULL)
+    {
+        heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
+        tarjeta = nextList(usuario->listaTarjetasUsuario);
+    }
+
+    usuario->quizesRealizados = usuario->quizesRealizados + 1;
+}
+
 void menuDeQuizes(tipoUsuario *usuario)
 {
     //Aquí se hace el quiz inicial y los quizes de control de aprendizaje
     if (usuario->quizesRealizados == 0 || usuario->quizesRealizados % 5 == 0)
     {
-        if (usuario->quizesRealizados == 0)
-        {
-            printf("Esta es la primera vez que realiza un quiz, por lo que deberá reponder todas las tarjetas para medir sus conocimientos:\n");
-        }
-
-        if (usuario->quizesRealizados != 0 && usuario->quizesRealizados % 5 == 0)
-        {
-            printf("Ya ha pasado un tiempo desde que hizo un quiz con todas sus tarjetas, ¿no lo cree?\n");
-            printf("Es momento de hacer uno para saber como va su aprendizaje!\n");
-        }
-
-        Pair *aux = firstTreeMap(usuario->mapaAnverso);
-        tipoTarjeta *tarjeta;
-        char *palabra;
-        int largo, k, fallos, opcionPista;
-
-        while (aux != NULL)
-        {
-            tarjeta = aux->value;
-            fallos = 0;
-
-            do
-            {
-                printf("%s, ", tarjeta->reverso);
-                printf("Ingrese el significado de esta palabra en español: ");
-                leerChar(&palabra);
-                largo = strlen(palabra) + 1;
-                for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
-                printf("\n");
-
-                if (strcmp(tarjeta->anverso, palabra) != 0) 
-                {
-                    tarjeta->complejidad = tarjeta->complejidad * 1.5;
-                    fallos++;
-
-                    if (fallos >= 3)
-                    {
-                        do
-                        {
-                            printf("¿Desea ver una pista?\n");
-                            printf("1.- SI\n");
-                            printf("2.- NO\n");
-                            scanf("%d", &opcionPista);
-                            getchar();
-                        } while (opcionPista < 0 || opcionPista > 3);
-
-                        if (opcionPista == 1) printf("%s\n", tarjeta->oracion);
-                    }
-                }
-
-                if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
-
-            } while (strcmp(tarjeta->anverso, palabra) != 0);
-                    
-            aux = nextTreeMap(usuario->mapaAnverso);
-        }
-
-        tarjeta = heap_top(usuario->monticuloComplejidad);
-
-        while (tarjeta != NULL)
-        {
-            heap_pop(usuario->monticuloComplejidad);
-            tarjeta = heap_top(usuario->monticuloComplejidad);
-        }
-
-        tarjeta = firstList(usuario->listaTarjetasUsuario);
-
-        while (tarjeta != NULL)
-        {
-            heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
-            tarjeta = nextList(usuario->listaTarjetasUsuario);
-        }
-
-        usuario->quizesRealizados = usuario->quizesRealizados + 1;
+        quizCompleto(usuario);
     }
     //Aquí se hacen los quizes personalizados por el usuario
     else
     {
-        tipoTarjeta *tarjeta;
-        int cantidadTarjetas, fallos, largo, k, opcionPista;
-        char *palabra;
-        int cont = 0;
-
-        do
-        {
-            printf("¿Cuántas tarjetas desea responder en este quiz?\n");
-            scanf("%d", &cantidadTarjetas);
-            getchar();
-        } while (cantidadTarjetas <= 0 || cantidadTarjetas > usuario->totalTarjetas);
-
-        while (cont < cantidadTarjetas)
-        {
-            tarjeta = heap_top(usuario->monticuloComplejidad);
-            fallos = 0;
-
-            do
-            {
-                printf("%s, ", tarjeta->reverso);
-                printf("Ingrese el significado de esta palabra en español: ");
-                leerChar(&palabra);
-                largo = strlen(palabra) + 1;
-                for (k = 0; k < largo ; k++) palabra[k] = tolower(palabra[k]);
-                printf("\n");
-
-                if (strcmp(tarjeta->anverso, palabra) != 0) 
-                {
-                    tarjeta->complejidad = tarjeta->complejidad * 1.5;
-                    fallos++;
-
-                    if (fallos >= 3)
-                    {
-                        do
-                        {
-                            printf("¿Desea ver una pista?\n");
-                            printf("1.- SI\n");
-                            printf("2.- NO\n");
-                            scanf("%d", &opcionPista);
-                            getchar();
-                        } while (opcionPista < 0 || opcionPista > 3);
-
-                        if (opcionPista == 1) printf("%s\n", tarjeta->oracion);
-                    }
-                }
-
-                if (strcmp(tarjeta->anverso, palabra) == 0) tarjeta->complejidad = tarjeta->complejidad * 0.5;
-
-            } while (strcmp(tarjeta->anverso, palabra) != 0);
-
-            heap_pop(usuario->monticuloComplejidad);
-            cont++;
-        }
-
-        tarjeta = heap_top(usuario->monticuloComplejidad);
-
-        while (tarjeta != NULL)
-        {
-            heap_pop(usuario->monticuloComplejidad);
-            tarjeta = heap_top(usuario->monticuloComplejidad);
-        }
-
-        tarjeta = firstList(usuario->listaTarjetasUsuario);
-
-        while (tarjeta != NULL)
-        {
-            heap_push(usuario->monticuloComplejidad, tarjeta, tarjeta->complejidad);
-            tarjeta = nextList(usuario->listaTarjetasUsuario);
-        }
-
-        usuario->quizesRealizados = usuario->quizesRealizados + 1;
+        quizPersonalizado(usuario);
     }
 }
 
